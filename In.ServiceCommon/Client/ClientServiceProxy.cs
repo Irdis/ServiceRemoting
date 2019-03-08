@@ -13,7 +13,7 @@ namespace In.ServiceCommon.Client
         private readonly Dictionary<Type, ISerializer> _serializers = new Dictionary<Type, ISerializer>();
         private readonly Dictionary<Tuple<string, string>, RemoteMethodInfo> _methodInfos = new Dictionary<Tuple<string, string>, RemoteMethodInfo>();
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<Stream>> _pendingRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<Stream>>();
-        private NetworkClient _networkClient;
+        private readonly NetworkClient _networkClient;
 
         public ClientServiceProxy(string host, string port)
         {

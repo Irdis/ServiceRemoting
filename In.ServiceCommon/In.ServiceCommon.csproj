@@ -46,10 +46,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client\ClientProxyGenerator.cs" />
     <Compile Include="Client\DefaultSerializer.cs" />
     <Compile Include="Client\ISerializer.cs" />
     <Compile Include="Client\RemoteMethodInfo.cs" />
     <Compile Include="Client\ClientServiceProxy.cs" />
+    <Compile Include="Interface\ServiceCallInfo.cs" />
+    <Compile Include="Interface\InterfaceInfoProvider.cs" />
+    <Compile Include="Interface\ServiceCallAttribute.cs" />
+    <Compile Include="Interface\ServiceNameAttribute.cs" />
     <Compile Include="Network\INetworkMessageProcessor.cs" />
     <Compile Include="Network\NetworkChannel.cs" />
     <Compile Include="Network\NetworkClient.cs" />
