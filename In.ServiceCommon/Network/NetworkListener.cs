@@ -16,7 +16,7 @@ namespace In.ServiceCommon
             while (true)
             {
                 var client = _listener.AcceptTcpClient();
-                var channel = new NetworkChannel(client);
+                var channel = new NetworkChannel(client, null);
                 _channels.Add(channel);
                 channel.Listen();
             }

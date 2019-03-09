@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client\ClientProxyBase.cs" />
     <Compile Include="Client\ClientProxyGenerator.cs" />
     <Compile Include="Client\DefaultSerializer.cs" />
     <Compile Include="Client\ISerializer.cs" />
@@ -69,7 +70,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Client\Builder\" />
     <Folder Include="Service\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

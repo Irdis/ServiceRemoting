@@ -46,7 +46,7 @@ namespace In.ServiceCommon.Client
 
         }
 
-        private void CallVoidSync(string type, string method, object[] args)
+        public void CallVoidSync(string type, string method, object[] args)
         {
             var key = Guid.NewGuid();
             using (var memory = new MemoryStream())
@@ -68,7 +68,7 @@ namespace In.ServiceCommon.Client
             }
         }
 
-        private void CallVoidAsync(string type, string method, object[] args)
+        public void CallVoidAsync(string type, string method, object[] args)
         {
             using (var memory = new MemoryStream())
             using (var writer = new BinaryWriter(memory))
@@ -96,18 +96,6 @@ namespace In.ServiceCommon.Client
             }
         }
 
-        public void CallVoid(string type, string method, object[] args)
-        {
-            var methodInfo = _methodInfos[Tuple.Create(type, method)];
-            if (methodInfo.AwaitResult)
-            {
-                CallVoidSync(type, method, args);
-            }
-            else
-            {
-                CallVoidAsync(type, method, args);
-            }
-        }
 
         private void WriteArguments(Stream memory, BinaryWriter writer, object[] args)
         {
