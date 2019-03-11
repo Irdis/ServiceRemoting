@@ -10,8 +10,6 @@ namespace In.ServiceCommon
     {
         static void Main(string[] args)
         {
-            var listener = new NetworkListener();
-            listener.Listen();
             Console.ReadKey();
         }
     }

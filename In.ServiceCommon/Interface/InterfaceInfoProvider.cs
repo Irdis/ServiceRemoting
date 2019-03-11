@@ -9,25 +9,23 @@ namespace In.ServiceCommon.Interface
     {
         private readonly List<Type> _services;
 
-        private readonly Dictionary<Tuple<Type, MethodInfo>, ServiceCallInfo> _interfaceInfos = new Dictionary<Tuple<Type, MethodInfo>, ServiceCallInfo>();
-
         public InterfaceInfoProvider(List<Type> services)
         {
             _services = services;
-            Init();
         }
 
-        private void Init()
+        public List<ServiceCallInfo> GetServiceCallInfos()
         {
+            var result = new List<ServiceCallInfo>();
             foreach (var service in _services)
             {
-                Analyze(service);
+                GetServiceCallInfos(service, result);
             }
+            return result;
         }
 
-        private void Analyze(Type service)
+        private void GetServiceCallInfos(Type service, List<ServiceCallInfo> aggregate)
         {
-
             var shortNameAttribute = service.GetCustomAttributes(typeof(ServiceNameAttribute), false).FirstOrDefault();
             var shortName = shortNameAttribute == null
                 ? service.FullName
@@ -41,8 +39,10 @@ namespace In.ServiceCommon.Interface
                     var attribute = (ServiceCallAttribute) methodInfoAttribute;
                     var methodShortName = attribute.Name ?? methodInfo.Name;
                     var awaitExec = attribute.Await;
-                    _interfaceInfos.Add(Tuple.Create(service, methodInfo), new ServiceCallInfo
+                    aggregate.Add(new ServiceCallInfo
                     {
+                        Type = service,
+                        Method = methodInfo,
                         ShortTypeName = shortName,
                         ShortMethodName = methodShortName,
                         ReturnType = methodInfo.ReturnType,
@@ -51,8 +51,10 @@ namespace In.ServiceCommon.Interface
                 }
                 else
                 {
-                    _interfaceInfos.Add(Tuple.Create(service, methodInfo), new ServiceCallInfo
+                    aggregate.Add(new ServiceCallInfo
                     {
+                        Type = service,
+                        Method = methodInfo,
                         ShortTypeName = shortName,
                         ShortMethodName = methodInfo.Name,
                         ReturnType = methodInfo.ReturnType,
@@ -62,9 +64,5 @@ namespace In.ServiceCommon.Interface
             }
         }
 
-        public ServiceCallInfo GetServiceCallInfo(Type type, MethodInfo method)
-        {
-            return _interfaceInfos[Tuple.Create(type, method)];
-        }
     }
 }

@@ -10,7 +10,7 @@ namespace In.ServiceCommon.Client
     public class ClientProxyGenerator
     {
         private readonly string _componentName;
-        private readonly InterfaceInfoProvider _infoProvider;
+        private readonly IDictionary<Tuple<Type,MethodInfo>, ServiceCallInfo> _infoProvider;
         private static readonly OpCode[] _intCodes = new OpCode[]
         {
             OpCodes.Ldc_I4_0,
@@ -39,7 +39,7 @@ namespace In.ServiceCommon.Client
         public ClientProxyGenerator(InterfaceInfoProvider infoProvider, string componentName)
         {
             _componentName = componentName;
-            _infoProvider = infoProvider;
+            _infoProvider = infoProvider.GetServiceCallInfos().ToDictionary(info => Tuple.Create(info.Type, info.Method));
         }
         public List<object> Build(List<Type> interfaces)
         {
@@ -87,7 +87,7 @@ namespace In.ServiceCommon.Client
 
         private void CreateDelegateMethod(Type interfaceType, MethodBuilder methodBuilder, MethodInfo methodInfo)
         {
-            var serviceCallInfo = _infoProvider.GetServiceCallInfo(interfaceType, methodInfo);
+            var serviceCallInfo = _infoProvider[Tuple.Create(interfaceType, methodInfo)];
             var parameters = methodInfo.GetParameters();
             var gen = methodBuilder.GetILGenerator();
             gen.Emit(OpCodes.Ldarg_0);

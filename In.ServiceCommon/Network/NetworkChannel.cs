@@ -6,7 +6,7 @@ using System.Text;
 
 namespace In.ServiceCommon.Network
 {
-    public class NetworkChannel
+    public class NetworkChannel : INetworkChannel
     {
         private readonly TcpClient _client;
         private readonly INetworkMessageProcessor _messageProcessor;

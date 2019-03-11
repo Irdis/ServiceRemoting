@@ -9,6 +9,13 @@ namespace In.ServiceCommon
     {
         private TcpListener _listener;
         private readonly List<NetworkChannel> _channels = new List<NetworkChannel>();
+        private readonly INetworkMessageProcessor _messageProcessor;
+
+        public NetworkListener(INetworkMessageProcessor messageProcessor)
+        {
+            _messageProcessor = messageProcessor;
+        }
+
         public void Listen()
         {
             _listener = new TcpListener(IPAddress.Any, 8000);
@@ -16,10 +23,17 @@ namespace In.ServiceCommon
             while (true)
             {
                 var client = _listener.AcceptTcpClient();
-                var channel = new NetworkChannel(client, null);
+                var channel = new NetworkChannel(client, _messageProcessor);
                 _channels.Add(channel);
                 channel.Listen();
             }
         }
+
+
+        public void Shutdown()
+        {
+
+        }
+
     }
 }
