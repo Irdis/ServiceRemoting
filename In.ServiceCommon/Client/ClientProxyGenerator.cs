@@ -10,7 +10,9 @@ namespace In.ServiceCommon.Client
     public class ClientProxyGenerator
     {
         private readonly string _componentName;
+        private List<Type> _interfaces;
         private readonly IDictionary<Tuple<Type,MethodInfo>, ServiceCallInfo> _infoProvider;
+
         private static readonly OpCode[] _intCodes = new OpCode[]
         {
             OpCodes.Ldc_I4_0,
@@ -23,6 +25,7 @@ namespace In.ServiceCommon.Client
             OpCodes.Ldc_I4_7,
             OpCodes.Ldc_I4_8
         };
+
         private static readonly OpCode[] _argCodes = new OpCode[]
         {
             OpCodes.Ldarg_0,
@@ -39,15 +42,11 @@ namespace In.ServiceCommon.Client
         public ClientProxyGenerator(InterfaceInfoProvider infoProvider, string componentName)
         {
             _componentName = componentName;
+            _interfaces = infoProvider.Services;
             _infoProvider = infoProvider.GetServiceCallInfos().ToDictionary(info => Tuple.Create(info.Type, info.Method));
         }
-        public List<object> Build(List<Type> interfaces)
-        {
-            var result = Generate(interfaces);
-            return result;
-        }
-
-        private List<object> Generate(ICollection<Type> interfaces)
+        
+        public List<object> Generate()
         {
             var currentDomain = AppDomain.CurrentDomain;
             var assemName = new AssemblyName();
@@ -55,7 +54,7 @@ namespace In.ServiceCommon.Client
             var assemBuilder = currentDomain.DefineDynamicAssembly(assemName, AssemblyBuilderAccess.Run);
             var moduleBuilder = assemBuilder.DefineDynamicModule(_componentName + "Module");
             var result = new List<object>();
-            foreach (var @interface in interfaces)
+            foreach (var @interface in _interfaces)
             {
                 result.Add(CreateImpl(moduleBuilder, @interface));
             }

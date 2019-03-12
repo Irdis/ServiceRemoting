@@ -1,0 +1,81 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using In.ServiceCommon.Interface;
+
+namespace In.ServiceCommon.Client
+{
+    public class ClientMessageBuilder
+    {
+        private readonly ISerializer _defaultSerializer;
+        private readonly Dictionary<Type, ISerializer> _serializers;
+        private readonly Dictionary<Tuple<string, string>, ServiceCallInfo> _methodInfos;
+
+        public ClientMessageBuilder(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers)
+        {
+            _defaultSerializer = new DefaultSerializer();
+            _serializers = serializers;
+            _methodInfos = interfaceInfo.GetServiceCallInfos()
+                .ToDictionary(info => Tuple.Create<string, string>(info.ShortTypeName, info.ShortMethodName));
+        }
+
+        public void WriteCall(Guid? key, string type, string method, object[] args, Stream stream)
+        {
+            using (var writer = new BinaryWriter(stream))
+            {
+                writer.Write(key.HasValue);
+                if (key.HasValue)
+                {
+                    writer.Write(key.Value.ToByteArray());
+                }
+
+                writer.Write(type);
+                writer.Write(method);
+                WriteArguments(stream, writer, args);
+            }
+        }
+
+        private void WriteArguments(Stream memory, BinaryWriter writer, object[] args)
+        {
+            writer.Write(args.Length);
+            foreach (var arg in args)
+            {
+                var argType = arg.GetType();
+                if (_serializers.TryGetValue(argType, out var serializer))
+                {
+                    serializer.Serialize(arg, memory);
+                }
+                else
+                {
+                    _defaultSerializer.Serialize(arg, memory);
+                }
+            }
+        }
+
+        public Guid ReadResult(Stream memory)
+        {
+            using (var reader = new BinaryReader(memory))
+            {
+                const int guidLength = 16;
+                var guidBytes = reader.ReadBytes(guidLength);
+                var guid = new Guid(guidBytes);
+                return guid;
+            }
+        }
+
+        public object DeserializeResult(string type, string method, Stream memory)
+        {
+            using (memory)
+            {
+                var methodInfo = _methodInfos[Tuple.Create(type, method)];
+                if (!_serializers.TryGetValue(methodInfo.ReturnType, out var serializer))
+                {
+                    serializer = _defaultSerializer;
+                }
+                var result = serializer.Deserialize(memory);
+                return result;
+            }
+        }
+    }
+}

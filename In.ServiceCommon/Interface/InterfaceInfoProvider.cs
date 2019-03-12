@@ -9,6 +9,8 @@ namespace In.ServiceCommon.Interface
     {
         private readonly List<Type> _services;
 
+        public List<Type> Services => _services;
+
         public InterfaceInfoProvider(List<Type> services)
         {
             _services = services;

@@ -46,8 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client\ClientMessageBuilder.cs" />
     <Compile Include="Client\ClientProxyBase.cs" />
     <Compile Include="Client\ClientProxyGenerator.cs" />
+    <Compile Include="Client\ClientServiceContainer.cs" />
     <Compile Include="Client\DefaultSerializer.cs" />
     <Compile Include="Client\ISerializer.cs" />
     <Compile Include="Client\RemoteMethodInfo.cs" />
@@ -62,13 +64,12 @@
     <Compile Include="Network\NetworkClient.cs" />
     <Compile Include="Network\NetworkListener.cs" />
     <Compile Include="Network\NetworkMessage.cs" />
-    <Compile Include="Network\NetworkMessageProcessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service\MessageTarget.cs" />
     <Compile Include="Service\MessageTargetHeader.cs" />
     <Compile Include="Service\ServiceContainer.cs" />
-    <Compile Include="Service\ServiceMessageParser.cs" />
+    <Compile Include="Service\ServiceMessageBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

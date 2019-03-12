@@ -7,13 +7,13 @@ using In.ServiceCommon.Interface;
 
 namespace In.ServiceCommon.Service
 {
-    public class ServiceMessageParser
+    public class ServiceMessageBuilder
     {
         private readonly ISerializer _defaultSerializer;
         private readonly Dictionary<Type, ISerializer> _serializers;
         private readonly Dictionary<Tuple<string, string>, ServiceCallInfo> _infoProvider;
 
-        public ServiceMessageParser(InterfaceInfoProvider infoProvider, ISerializer defaultSerializer, Dictionary<Type, ISerializer> serializers)
+        public ServiceMessageBuilder(InterfaceInfoProvider infoProvider, ISerializer defaultSerializer, Dictionary<Type, ISerializer> serializers)
         {
             _infoProvider = infoProvider.GetServiceCallInfos().ToDictionary(info => Tuple.Create(info.ShortTypeName, info.ShortMethodName));
             _serializers = serializers;
