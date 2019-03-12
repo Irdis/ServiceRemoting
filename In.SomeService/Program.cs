@@ -19,16 +19,6 @@ namespace In.SomeService
                 typeof(IMyAService),
                 typeof(IMyBService),
             };
-            var generator = new ClientProxyGenerator(new InterfaceInfoProvider(
-                services));
-            var proxies = generator.Build(services);
-            foreach (var proxy in proxies.OfType<ClientProxyBase>())
-            {
-                proxy.ServiceProxy = new ClientServiceProxy("", "");
-            }
-
-            ((IMyAService) proxies[0]).Add(1, 2);
-            XmlConfigurator.Configure();
         }
     }
 }

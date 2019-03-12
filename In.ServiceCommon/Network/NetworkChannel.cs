@@ -89,6 +89,7 @@ namespace In.ServiceCommon.Network
             {
                 var buffer = BitConverter.GetBytes((int)memory.Length);
                 _stream.Write(buffer, 0, buffer.Length);
+                memory.Position = 0;
                 memory.CopyTo(_stream);
             }
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using In.ServiceCommon.Interface;
 
 namespace In.ServiceCommon.Client
@@ -22,7 +23,7 @@ namespace In.ServiceCommon.Client
 
         public void WriteCall(Guid? key, string type, string method, object[] args, Stream stream)
         {
-            using (var writer = new BinaryWriter(stream))
+            using (var writer = Writer(stream))
             {
                 writer.Write(key.HasValue);
                 if (key.HasValue)
@@ -55,13 +56,23 @@ namespace In.ServiceCommon.Client
 
         public Guid ReadResult(Stream memory)
         {
-            using (var reader = new BinaryReader(memory))
+            using (var reader = Reader(memory))
             {
                 const int guidLength = 16;
                 var guidBytes = reader.ReadBytes(guidLength);
                 var guid = new Guid(guidBytes);
                 return guid;
             }
+        }
+
+        private static BinaryWriter Writer(Stream stream)
+        {
+            return new BinaryWriter(stream, new UTF8Encoding(false, true), true);
+        }
+
+        private static BinaryReader Reader(Stream memory)
+        {
+            return new BinaryReader(memory, new UTF8Encoding(false, true), true);
         }
 
         public object DeserializeResult(string type, string method, Stream memory)

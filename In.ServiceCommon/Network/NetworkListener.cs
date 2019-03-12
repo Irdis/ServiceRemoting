@@ -16,9 +16,9 @@ namespace In.ServiceCommon
             _messageProcessor = messageProcessor;
         }
 
-        public void Listen()
+        public void Listen(int port)
         {
-            _listener = new TcpListener(IPAddress.Any, 8000);
+            _listener = new TcpListener(IPAddress.Any, port);
             _listener.Start();
             while (true)
             {

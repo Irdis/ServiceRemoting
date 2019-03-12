@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using In.ServiceCommon.Client;
 using In.ServiceCommon.Interface;
 
@@ -23,7 +24,7 @@ namespace In.ServiceCommon.Service
         public MessageTarget ParseMessage(byte[] message)
         {
             using (var memory = new MemoryStream(message))
-            using (var reader = new BinaryReader(memory))
+            using (var reader = Reader(memory))
 
             {
                 var header = GetTargetKey(reader);
@@ -35,7 +36,7 @@ namespace In.ServiceCommon.Service
 
         public void WriteResult(Stream stream, MessageTarget target, object result)
         {
-            using (var writer = new BinaryWriter(stream))
+            using (var writer = Writer(stream))
             {
                 var messageKeyValue = target.MessageKey.Value;
                 writer.Write(messageKeyValue.ToByteArray());
@@ -52,7 +53,7 @@ namespace In.ServiceCommon.Service
 
         public void WriteVoidResult(Stream stream, MessageTarget target)
         {
-            using (var writer = new BinaryWriter(stream))
+            using (var writer = Writer(stream))
             {
                 var messageKeyValue = target.MessageKey.Value;
                 writer.Write(messageKeyValue.ToByteArray());
@@ -105,6 +106,16 @@ namespace In.ServiceCommon.Service
             target.Await = header.Await;
             target.MessageKey = header.MessageKey;
             return target;
+        }
+
+        private static BinaryWriter Writer(Stream stream)
+        {
+            return new BinaryWriter(stream, new UTF8Encoding(false, true), true);
+        }
+
+        private static BinaryReader Reader(Stream memory)
+        {
+            return new BinaryReader(memory, new UTF8Encoding(false, true), true);
         }
     }
 }

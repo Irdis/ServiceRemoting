@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using In.ServiceCommon.Client;
 using In.ServiceCommon.Interface;
 using In.ServiceCommon.Network;
@@ -16,18 +17,18 @@ namespace In.ServiceCommon.Service
         private readonly NetworkListener _networkListener;
         private readonly ServiceMessageBuilder _messageBuilder;
 
-        public ServiceContainer(Dictionary<Type, object> services, Dictionary<Type, ISerializer> serializers)
+        public ServiceContainer(int port, Dictionary<Type, object> services, Dictionary<Type, ISerializer> serializers)
         {
             _services = services;
             _networkListener = new NetworkListener(this);
             var interfaceInfoProvider = new InterfaceInfoProvider(services.Keys.ToList());
             _messageBuilder = new ServiceMessageBuilder(interfaceInfoProvider, new DefaultSerializer(), serializers);
-            Init();
+            Init(port);
         }
 
-        private void Init()
+        private void Init(int port)
         {
-            _networkListener.Listen();
+            Task.Factory.StartNew(() => _networkListener.Listen(port), TaskCreationOptions.LongRunning);
         }
 
         public void OnMessage(object sender, byte[] message)

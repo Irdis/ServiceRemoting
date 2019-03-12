@@ -49,5 +49,15 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\In.ServiceCommon\In.ServiceCommon.csproj">
+      <Project>{BA5D8FAB-7CB5-4708-83A2-077D428666DD}</Project>
+      <Name>In.ServiceCommon</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\In.SomeService\In.SomeService.csproj">
+      <Project>{0105C76B-C217-4852-9713-EF0FE04A80AC}</Project>
+      <Name>In.SomeService</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

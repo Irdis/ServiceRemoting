@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using In.SomeService;
 
 namespace In.ServiceCommon.Client
 {
@@ -12,20 +13,15 @@ namespace In.ServiceCommon.Client
     {
         static void Main(string[] args)
         {
-            var tcpClient = new TcpClient();
-            tcpClient.Connect("localhost", 8000);
-            var stream = tcpClient.GetStream();
-            var sb = new StringBuilder();
-            for (int i = 0; i < 1000; i++)
+            var client = new ClientServiceContainer("localhost", 8000, new List<Type>
             {
-                sb.Append("Kappa" + i);
-            }
-            var bytes = ASCIIEncoding.ASCII.GetBytes(sb.ToString());
-            var length = BitConverter.GetBytes(bytes.Length);
-            stream.Write(length, 0, length.Length);
-            stream.Write(bytes, 0, bytes.Length);
-            stream.Write(length, 0, length.Length);
-            stream.Write(bytes, 0, bytes.Length);
+                typeof(IMyAService),
+                typeof(IMyBService)
+            }, new Dictionary<Type, ISerializer>());
+            Console.ReadKey();
+            var serviceA = (IMyAService)client.GetService(typeof(IMyAService));
+            var result = serviceA.Add(1, 2);
+            Console.WriteLine(result);
             Console.ReadKey();
         }
     }
