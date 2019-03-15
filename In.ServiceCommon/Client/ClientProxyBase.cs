@@ -1,6 +1,6 @@
 ﻿namespace In.ServiceCommon.Client
 {
-    public class ClientProxyBase
+    public abstract class ClientProxyBase
     {
         public ClientServiceProxy ServiceProxy { get; set; }
     }

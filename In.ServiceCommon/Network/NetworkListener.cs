@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 using In.ServiceCommon.Network;
+using In.ServiceCommon.Service;
 
 namespace In.ServiceCommon
 {
@@ -10,10 +11,12 @@ namespace In.ServiceCommon
         private TcpListener _listener;
         private readonly List<NetworkChannel> _channels = new List<NetworkChannel>();
         private readonly INetworkMessageProcessor _messageProcessor;
+        private readonly IChannelObserver _channelObserver;
 
-        public NetworkListener(INetworkMessageProcessor messageProcessor)
+        public NetworkListener(INetworkMessageProcessor messageProcessor, IChannelObserver channelObserver)
         {
             _messageProcessor = messageProcessor;
+            _channelObserver = channelObserver;
         }
 
         public void Listen(int port)
@@ -25,6 +28,7 @@ namespace In.ServiceCommon
                 var client = _listener.AcceptTcpClient();
                 var channel = new NetworkChannel(client, _messageProcessor);
                 _channels.Add(channel);
+                _channelObserver.OnChannelConnected(channel);
                 channel.Listen();
             }
         }
@@ -32,8 +36,6 @@ namespace In.ServiceCommon
 
         public void Shutdown()
         {
-
         }
-
     }
 }

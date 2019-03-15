@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using In.ServiceCommon.Interface;
+using In.ServiceCommon.Streaming;
 
 namespace In.ServiceCommon.Client
 {
@@ -12,19 +13,25 @@ namespace In.ServiceCommon.Client
         public ClientServiceContainer(
             string host,
             int port,
-            List<Type> interfaces, 
-            Dictionary<Type, ISerializer> serializers)
+            List<Type> remoteInterfaces, 
+            Dictionary<Type, ISerializer> serializers,
+            List<ClientStreamingInfo> networkStreamingAdapters)
         {
-            var interfaceInfoProvider = new InterfaceInfoProvider(interfaces);
+            var interfaceInfoProvider = new InterfaceInfoProvider(remoteInterfaces);
             var generator = new ClientProxyGenerator(interfaceInfoProvider);
             var proxies = generator.Generate();
-            var serviceProxy = new ClientServiceProxy(interfaceInfoProvider, serializers);
-            foreach (var proxy in proxies.OfType<ClientProxyBase>())
+            var streamers = networkStreamingAdapters.ToDictionary(info => info.Type, info => info.Callback);
+            var serviceProxy = new ClientServiceProxy(interfaceInfoProvider, serializers, streamers);
+            
+            var streamingAdapters = networkStreamingAdapters.Select(info => info.Adapter).OfType<ClientProxyBase>();
+            var rpcProxies = proxies.OfType<ClientProxyBase>();
+            
+            foreach (var proxy in rpcProxies.Concat(streamingAdapters))
             {
                 proxy.ServiceProxy = serviceProxy;
             }
-
-            _services = interfaces.Zip(proxies, Tuple.Create)
+            
+            _services = remoteInterfaces.Zip(proxies, Tuple.Create)
                 .ToDictionary(tuple => tuple.Item1, tuple => tuple.Item2);
 
             serviceProxy.Connect(host, port);

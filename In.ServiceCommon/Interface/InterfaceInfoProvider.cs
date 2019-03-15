@@ -48,6 +48,7 @@ namespace In.ServiceCommon.Interface
                         ShortTypeName = shortName,
                         ShortMethodName = methodShortName,
                         ReturnType = methodInfo.ReturnType,
+                        ArgumentTypes = methodInfo.GetParameters().Select(info => info.ParameterType).ToArray(),
                         Await = awaitExec
                     });
                 }
@@ -60,6 +61,7 @@ namespace In.ServiceCommon.Interface
                         ShortTypeName = shortName,
                         ShortMethodName = methodInfo.Name,
                         ReturnType = methodInfo.ReturnType,
+                        ArgumentTypes = methodInfo.GetParameters().Select(info => info.ParameterType).ToArray(),
                         Await = true
                     });
                 }

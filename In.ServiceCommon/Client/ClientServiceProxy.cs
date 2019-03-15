@@ -13,9 +13,12 @@ namespace In.ServiceCommon.Client
         private readonly ClientMessageBuilder _messageBuilder;
         private readonly NetworkClient _networkClient;
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<Stream>> _pendingRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<Stream>>();
+        private readonly Dictionary<string, DelegateCallback> _streamingCallbacks;
 
-        public ClientServiceProxy(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers)
+
+        public ClientServiceProxy(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers, Dictionary<string, DelegateCallback> streamingCallbacks)
         {
+            _streamingCallbacks = streamingCallbacks;
             _messageBuilder = new ClientMessageBuilder(interfaceInfo, serializers);
             _networkClient = new NetworkClient(this);
         }
@@ -80,12 +83,35 @@ namespace In.ServiceCommon.Client
         {
             using (var memory = new MemoryStream(message))
             {
-                var guid = _messageBuilder.ReadResult(memory);
-                if (_pendingRequests.TryGetValue(guid, out var completion))
+                var header = _messageBuilder.ReadHeader(memory);
+
+                if (header.Type == MessageType.Streaming)
                 {
-                    var messageStream = new MemoryStream(message, (int) memory.Position, message.Length - (int)memory.Position);
-                    completion.SetResult(messageStream);
+                    ProcessStreamingMessage(header, memory, message);
                 }
+                else if (header.Type == MessageType.Rpc)
+                {
+                    ProcessRpcMessage(header, memory, message);
+                }
+            }
+        }
+
+        private void ProcessRpcMessage(ClientMessageHeader header, MemoryStream memory, byte[] message)
+        {
+            if (_pendingRequests.TryGetValue(header.Key.Value, out var completionSource))
+            {
+                var messageStream = new MemoryStream(message, (int) memory.Position, message.Length - (int) memory.Position);
+                completionSource.SetResult(messageStream);
+            }
+        }
+
+
+        private void ProcessStreamingMessage(ClientMessageHeader header, MemoryStream memory, byte[] message)
+        {
+            if (_streamingCallbacks.TryGetValue(header.StreamingTarget, out var callback))
+            {
+                var result = _messageBuilder.DeserializeResult(callback.Type, memory);
+                callback.Send(result);
             }
         }
     }

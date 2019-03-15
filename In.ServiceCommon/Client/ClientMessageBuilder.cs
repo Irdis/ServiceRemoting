@@ -54,14 +54,29 @@ namespace In.ServiceCommon.Client
             }
         }
 
-        public Guid ReadResult(Stream memory)
+        public ClientMessageHeader ReadHeader(Stream memory)
         {
             using (var reader = Reader(memory))
             {
+                var msgType = reader.ReadInt32();
+                if (msgType == (int) MessageType.Streaming)
+                {
+                    var streamingTarget = reader.ReadString();
+                    return new ClientMessageHeader
+                    {
+                        Type = MessageType.Streaming,
+                        StreamingTarget = streamingTarget
+                    };
+                }
+
                 const int guidLength = 16;
                 var guidBytes = reader.ReadBytes(guidLength);
                 var guid = new Guid(guidBytes);
-                return guid;
+                return new ClientMessageHeader
+                {
+                    Type = MessageType.Rpc,
+                    Key = guid
+                };
             }
         }
 
@@ -81,6 +96,20 @@ namespace In.ServiceCommon.Client
             {
                 var methodInfo = _methodInfos[Tuple.Create(type, method)];
                 if (!_serializers.TryGetValue(methodInfo.ReturnType, out var serializer))
+                {
+                    serializer = _defaultSerializer;
+                }
+                var result = serializer.Deserialize(memory);
+                return result;
+            }
+        }
+
+        
+        public object DeserializeResult(Type t, Stream memory)
+        {
+            using (memory)
+            {
+                if (!_serializers.TryGetValue(t, out var serializer))
                 {
                     serializer = _defaultSerializer;
                 }
