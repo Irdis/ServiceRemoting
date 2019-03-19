@@ -57,13 +57,13 @@
     <Compile Include="Client\ClientStreamingInfo.cs" />
     <Compile Include="Client\DefaultSerializer.cs" />
     <Compile Include="Client\DelegateCallback.cs" />
+    <Compile Include="Client\IClientServiceProxy.cs" />
     <Compile Include="Client\MessageType.cs" />
     <Compile Include="Service\DelegateContract.cs" />
     <Compile Include="Service\IChannelObserver.cs" />
     <Compile Include="Service\NetworkAdapterService.cs" />
     <Compile Include="Streaming\IClientAdapter.cs" />
     <Compile Include="Client\ISerializer.cs" />
-    <Compile Include="Client\RemoteMethodInfo.cs" />
     <Compile Include="Client\ClientServiceProxy.cs" />
     <Compile Include="Interface\ServiceCallInfo.cs" />
     <Compile Include="Interface\InterfaceInfoProvider.cs" />
@@ -89,7 +89,6 @@
     <Compile Include="Streaming\NetworkStreamingCallback.cs" />
     <Compile Include="Streaming\NetworkStreamingClientAdapter.cs" />
     <Compile Include="Streaming\NetworkStreamingServerAdapter.cs" />
-    <Compile Include="Streaming\StreamingContext.cs" />
     <Compile Include="Streaming\StreamingManager.cs" />
     <Compile Include="Streaming\SubscriptionList.cs" />
   </ItemGroup>

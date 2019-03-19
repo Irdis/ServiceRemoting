@@ -13,8 +13,7 @@ namespace In.SomeService
 
         public IStreamingAdapter<int> GetAdapter()
         {
-            var adapter = new MyCStreamingAdapter();
-            return adapter;
+            return _adapter;
         }
     }
 }

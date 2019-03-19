@@ -24,17 +24,17 @@ namespace In.ServiceCommon.Client
                 MyCStreamingNetworkInfo()
             });
             Console.ReadKey();
-            var serviceA = (IMyAService)client.GetService(typeof(IMyAService));
-            var result = serviceA.Add(1, 2);
-            Console.WriteLine(result);
-            Console.ReadKey();
-            var serviceB = (IMyBService)client.GetService(typeof(IMyBService));
-            var result2 = serviceB.Rotate(new Bar
-            {
-                Name = "hello"
-            });
-            Console.WriteLine(result2);
-            Console.ReadKey();
+            //var serviceA = (IMyAService)client.GetService(typeof(IMyAService));
+            //var result = serviceA.Add(1, 2);
+            //Console.WriteLine(result);
+            //Console.ReadKey();
+            //var serviceB = (IMyBService)client.GetService(typeof(IMyBService));
+            //var result2 = serviceB.Rotate(new Bar
+            //{
+            //    Name = "hello"
+            //});
+            //Console.WriteLine(result2);
+            //Console.ReadKey();
             _service.Subscribe(1, new Program());
             Console.ReadKey();
         }
@@ -47,6 +47,8 @@ namespace In.ServiceCommon.Client
             return new ClientStreamingInfo
             {
                 Type = streamingType,
+                KeyType = typeof(int),
+                ValueType = typeof(MyCStreamingData),
                 Adapter = (ClientProxyBase) adapterFactory.GetAdapter(),
                 Callback = DelegateCallback.Create(_service)
             };

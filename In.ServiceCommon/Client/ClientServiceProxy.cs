@@ -2,13 +2,14 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using In.ServiceCommon.Interface;
 using In.ServiceCommon.Network;
 
 namespace In.ServiceCommon.Client
 {
-    public class ClientServiceProxy : INetworkMessageProcessor
+    public class ClientServiceProxy : INetworkMessageProcessor, IClientServiceProxy
     {
         private readonly ClientMessageBuilder _messageBuilder;
         private readonly NetworkClient _networkClient;
@@ -16,10 +17,11 @@ namespace In.ServiceCommon.Client
         private readonly Dictionary<string, DelegateCallback> _streamingCallbacks;
 
 
-        public ClientServiceProxy(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers, Dictionary<string, DelegateCallback> streamingCallbacks)
+        public ClientServiceProxy(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers, List<ClientStreamingInfo> streamingCallbacks)
         {
-            _streamingCallbacks = streamingCallbacks;
-            _messageBuilder = new ClientMessageBuilder(interfaceInfo, serializers);
+            var streamers = streamingCallbacks.ToDictionary(info => info.Type, info => info.Callback);
+            _streamingCallbacks = streamers;
+            _messageBuilder = new ClientMessageBuilder(interfaceInfo, serializers, streamingCallbacks);
             _networkClient = new NetworkClient(this);
         }
 

@@ -12,13 +12,43 @@ namespace In.ServiceCommon.Client
         private readonly ISerializer _defaultSerializer;
         private readonly Dictionary<Type, ISerializer> _serializers;
         private readonly Dictionary<Tuple<string, string>, ServiceCallInfo> _methodInfos;
+        
+        public const string SubSignature = "sub";
+        public const string UnsubSignature = "unsub";
 
-        public ClientMessageBuilder(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers)
+        public ClientMessageBuilder(InterfaceInfoProvider interfaceInfo, Dictionary<Type, ISerializer> serializers,
+            List<ClientStreamingInfo> streamingCallbacks)
         {
             _defaultSerializer = new DefaultSerializer();
             _serializers = serializers;
             _methodInfos = interfaceInfo.GetServiceCallInfos()
-                .ToDictionary(info => Tuple.Create<string, string>(info.ShortTypeName, info.ShortMethodName));
+                .ToDictionary(info => Tuple.Create(info.ShortTypeName, info.ShortMethodName));
+            foreach (var streamingCallback in streamingCallbacks)
+            {
+                var adapterType = streamingCallback.Adapter.GetType();
+                _methodInfos.Add(Tuple.Create(streamingCallback.Type, SubSignature), new ServiceCallInfo
+                {
+                    Type = adapterType,
+                    Method = adapterType.GetMethod("Subscribe", new []{streamingCallback.KeyType.MakeArrayType()}),
+                    ArgumentTypes = new []{streamingCallback.KeyType.MakeArrayType()},
+                    Await = true,
+                    ReturnType = typeof(bool[]),
+                    ShortMethodName = SubSignature,
+                    ShortTypeName = streamingCallback.Type,
+                    StreamingCall = false
+                });
+                _methodInfos.Add(Tuple.Create(streamingCallback.Type, UnsubSignature), new ServiceCallInfo
+                {
+                    Type = adapterType,
+                    Method = adapterType.GetMethod("Unsubscribe", new []{streamingCallback.KeyType.MakeArrayType()}),
+                    ArgumentTypes = new []{streamingCallback.KeyType.MakeArrayType()},
+                    Await = true,
+                    ReturnType = typeof(bool[]),
+                    ShortMethodName = UnsubSignature,
+                    ShortTypeName = streamingCallback.Type,
+                    StreamingCall = false
+                });
+            }
         }
 
         public void WriteCall(Guid? key, string type, string method, object[] args, Stream stream)

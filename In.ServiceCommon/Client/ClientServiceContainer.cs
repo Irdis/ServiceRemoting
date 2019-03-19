@@ -20,8 +20,7 @@ namespace In.ServiceCommon.Client
             var interfaceInfoProvider = new InterfaceInfoProvider(remoteInterfaces);
             var generator = new ClientProxyGenerator(interfaceInfoProvider);
             var proxies = generator.Generate();
-            var streamers = networkStreamingAdapters.ToDictionary(info => info.Type, info => info.Callback);
-            var serviceProxy = new ClientServiceProxy(interfaceInfoProvider, serializers, streamers);
+            var serviceProxy = new ClientServiceProxy(interfaceInfoProvider, serializers, networkStreamingAdapters);
             
             var streamingAdapters = networkStreamingAdapters.Select(info => info.Adapter).OfType<ClientProxyBase>();
             var rpcProxies = proxies.OfType<ClientProxyBase>();

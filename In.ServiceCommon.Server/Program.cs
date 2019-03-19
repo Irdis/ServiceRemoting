@@ -21,7 +21,7 @@ namespace In.ServiceCommon.Server
             {typeof(IMyBService), new MyBService()},
             }, new Dictionary<Type, ISerializer>(), new Dictionary<string, DelegateContract>
             {
-                {"MyC", DelegateContract.Create(myCStreamingService)}
+                {"MyC", DelegateContract.Create(myCStreamingService, "MyC")}
             });
 
             Console.ReadKey();

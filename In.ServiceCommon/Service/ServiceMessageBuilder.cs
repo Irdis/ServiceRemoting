@@ -59,11 +59,12 @@ namespace In.ServiceCommon.Service
             }
         }
 
-        public void WriteStreamingResult(Stream stream, Type target, object result)
+        public void WriteStreamingResult(Stream stream, string streamingType, Type target, object result)
         {
             using (var writer = Writer(stream))
             {
                 writer.Write((int)MessageType.Streaming);
+                writer.Write(streamingType);
                 if (_serializers.TryGetValue(target, out var serializer))
                 {
                     serializer.Serialize(result, stream);

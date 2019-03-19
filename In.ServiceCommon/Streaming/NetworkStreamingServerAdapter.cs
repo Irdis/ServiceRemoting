@@ -15,6 +15,7 @@ namespace In.ServiceCommon.Streaming
             var streamingCallback = typeof(NetworkStreamingCallback<>).MakeGenericType(contract.ValueType);
             _callback = Activator.CreateInstance(streamingCallback, new object[]
             {
+                contract.StreamingType,
                 builder,
                 channel,
                 implementationType
