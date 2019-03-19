@@ -9,10 +9,11 @@ using In.ServiceCommon.Network;
 
 namespace In.ServiceCommon.Client
 {
-    public class ClientServiceProxy : INetworkMessageProcessor, IClientServiceProxy
+    public class ClientServiceProxy : INetworkMessageProcessor, IClientServiceProxy, IDisposable
     {
+        private NetworkClient _networkClient;
+        
         private readonly ClientMessageBuilder _messageBuilder;
-        private readonly NetworkClient _networkClient;
         private readonly ConcurrentDictionary<Guid, TaskCompletionSource<Stream>> _pendingRequests = new ConcurrentDictionary<Guid, TaskCompletionSource<Stream>>();
         private readonly Dictionary<string, DelegateCallback> _streamingCallbacks;
 
@@ -22,12 +23,13 @@ namespace In.ServiceCommon.Client
             var streamers = streamingCallbacks.ToDictionary(info => info.Type, info => info.Callback);
             _streamingCallbacks = streamers;
             _messageBuilder = new ClientMessageBuilder(interfaceInfo, serializers, streamingCallbacks);
-            _networkClient = new NetworkClient(this);
+            
         }
 
         public void Connect(string host, int port)
         {
-            _networkClient.Connect(host, port);
+            _networkClient = new NetworkClient(host, port, this);
+            _networkClient.Initialize();
         }
 
         public object Call(string type, string method, object[] args)
@@ -115,6 +117,11 @@ namespace In.ServiceCommon.Client
                 var result = _messageBuilder.DeserializeResult(callback.Type, memory);
                 callback.Send(result);
             }
+        }
+
+        public void Dispose()
+        {
+            _networkClient?.Shutdown();
         }
     }
 }

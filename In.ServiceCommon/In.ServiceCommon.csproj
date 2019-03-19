@@ -59,6 +59,8 @@
     <Compile Include="Client\DelegateCallback.cs" />
     <Compile Include="Client\IClientServiceProxy.cs" />
     <Compile Include="Client\MessageType.cs" />
+    <Compile Include="Network\ChannelState.cs" />
+    <Compile Include="Network\InvalidNetworkClientStateException.cs" />
     <Compile Include="Service\DelegateContract.cs" />
     <Compile Include="Service\IChannelObserver.cs" />
     <Compile Include="Service\NetworkAdapterService.cs" />

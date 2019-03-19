@@ -26,10 +26,10 @@ namespace In.ServiceCommon
             while (true)
             {
                 var client = _listener.AcceptTcpClient();
-                var channel = new NetworkChannel(client, _messageProcessor);
+                var channel = new NetworkChannel(_messageProcessor);
                 _channels.Add(channel);
                 _channelObserver.OnChannelConnected(channel);
-                channel.Listen();
+                channel.Listen(client);
             }
         }
 

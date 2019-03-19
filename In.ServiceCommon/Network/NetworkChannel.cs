@@ -1,80 +1,94 @@
 ﻿using System;
 using System.IO;
 using System.Net.Sockets;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
+using log4net;
 
 namespace In.ServiceCommon.Network
 {
     public class NetworkChannel : INetworkChannel
     {
-        private readonly TcpClient _client;
+        private static readonly ILog _log = LogManager.GetLogger(typeof(NetworkChannel));
+
         private readonly INetworkMessageProcessor _messageProcessor;
         private readonly byte[] _buffer = new byte[BufferLength];
-        private NetworkStream _stream;
+        private Stream _stream;
         private const int BufferLength = 1024;
-        private int _bytesNeed;
-        private int _bytesRead;
+        private volatile int _bytesNeed;
+        private volatile int _bytesRead;
+        public event Action<object> OnDisconnect;
         private readonly object _lock = new object();
+        private TcpClient _client;
 
-        public NetworkChannel(TcpClient client, INetworkMessageProcessor messageProcessor)
+        public NetworkChannel(INetworkMessageProcessor messageProcessor)
         {
-            _client = client;
             _messageProcessor = messageProcessor;
         }
 
-        public void Listen()
+        public void Listen(TcpClient client)
         {
-            _stream = _client.GetStream();
+            _client = client;
+            _stream = client.GetStream();
             _bytesNeed = 4;
             _bytesRead = 0;
-            AwaitHeader();
+            AwaitHeader(new ChannelState
+            {
+                Client = _client,
+                Message = null
+            });
         }
 
-        private void AwaitHeader()
+        private void AwaitHeader(ChannelState state)
         {
-            _stream.BeginRead(_buffer, _bytesRead, _bytesNeed-_bytesRead, AwaitHeaderCompleted, null);
+            TryBeginRead(_buffer, _bytesRead, _bytesNeed-_bytesRead, AwaitHeaderCompleted, state);
         }
 
         private void AwaitHeaderCompleted(IAsyncResult ar)
         {
-            var read = _stream.EndRead(ar);
-            _bytesRead += read;
-            if (_bytesRead < _bytesNeed)
+            if (TryEndRead(ar, out var read))
             {
-                AwaitHeader();
-                return;
+                var state = (ChannelState)ar.AsyncState;
+                _bytesRead += read;
+                if (_bytesRead < _bytesNeed)
+                {
+                    AwaitHeader(state);
+                    return;
+                }
+
+                var msgSize = BitConverter.ToInt32(_buffer, 0);
+                _bytesNeed = msgSize;
+                _bytesRead = 0;
+                var msg = new NetworkMessage(msgSize);
+                state.Message = msg;
+                AwaitBody(state);
             }
-
-            var msgSize = BitConverter.ToInt32(_buffer, 0);
-            _bytesNeed = msgSize;
-            _bytesRead = 0;
-            var msg = new NetworkMessage(msgSize);
-            AwaitBody(msg);
-
         }
 
-        private void AwaitBody(NetworkMessage message)
+
+        private void AwaitBody(ChannelState state)
         {
-            _stream.BeginRead(_buffer, 0, Math.Min(BufferLength, _bytesNeed - _bytesRead), AwaitBodyCompleted, message);
+            TryBeginRead(_buffer, 0, Math.Min(BufferLength, _bytesNeed - _bytesRead), AwaitBodyCompleted, state);
         }
 
         private void AwaitBodyCompleted(IAsyncResult ar)
         {
-            var read = _stream.EndRead(ar);
-            _bytesRead += read;
-            var message = (NetworkMessage) ar.AsyncState;
-            message.AppendData(_buffer, read);
-            if (_bytesRead < _bytesNeed)
+            if (TryEndRead(ar, out var read))
             {
-                AwaitBody(message);
-                return;
-            }
+                _bytesRead += read;
+                var state = (ChannelState) ar.AsyncState;
+                var message = state.Message;
+                message.AppendData(_buffer, read);
+                if (_bytesRead < _bytesNeed)
+                {
+                    AwaitBody(state);
+                    return;
+                }
 
-            MessageCompleted(message);
-            _bytesNeed = 4;
-            _bytesRead = 0;
-            AwaitHeader();
+                MessageCompleted(message);
+                state.Message = null;
+                _bytesNeed = 4;
+                _bytesRead = 0;
+                AwaitHeader(state);
+            }
         }
 
         private void MessageCompleted(NetworkMessage message)
@@ -87,11 +101,74 @@ namespace In.ServiceCommon.Network
         {
             lock (_lock)
             {
-                var buffer = BitConverter.GetBytes((int)memory.Length);
+                TrySend(memory);
+            }
+        }
+
+        private void TrySend(Stream memory)
+        {
+            try
+            {
+                var buffer = BitConverter.GetBytes((int) memory.Length);
                 _stream.Write(buffer, 0, buffer.Length);
                 memory.Position = 0;
                 memory.CopyTo(_stream);
             }
+            catch (IOException e)
+            {
+                _log.Warn("Unable to write data", e);
+                OnDisconnect?.Invoke(_client);
+                throw;
+            }
         }
+
+
+        private bool TryBeginRead(byte[] buffer,
+            int offset,
+            int size,
+            AsyncCallback callback,
+            ChannelState state)
+        {
+            try
+            {
+                _stream.BeginRead(buffer, offset, size, callback, state);
+                return true;
+            }
+            catch (ObjectDisposedException e)
+            {
+                _log.Warn("Stream disposed", e);
+                return false;
+            }
+            catch (IOException e)
+            {
+                _log.Warn("Unable to attempt reading data", e);
+                OnDisconnect?.Invoke(state.Client);
+                return false;
+            }
+        }
+
+        private bool TryEndRead(IAsyncResult ar, out int read)
+        {
+            try
+            {
+                read = _stream.EndRead(ar);
+                return true;
+            }
+            catch (ObjectDisposedException e)
+            {
+                _log.Warn("Stream disposed", e);
+                read = 0;
+                return false;
+            }
+            catch (IOException e)
+            {
+                _log.Warn("Unable to read data", e);
+                read = 0;
+                var state = (ChannelState) ar.AsyncState;
+                OnDisconnect?.Invoke(state.Client);
+                return false;
+            }
+        }
+
     }
 }

@@ -2,8 +2,6 @@
 
 namespace In.ServiceCommon.Network
 {
-    
-
     public class NetworkMessage
     {
         private int _offset;

@@ -13,6 +13,7 @@ namespace In.SomeService
 
         private HashSet<int> _keys = new HashSet<int>();
         private Timer _timer;
+        private volatile int _counter = 0;
 
         public MyCStreamingAdapter()
         {
@@ -27,7 +28,7 @@ namespace In.SomeService
                     _callback.Send(new MyCStreamingData
                     {
                         Key = key,
-                        Data = "Hello " + key,
+                        Data = "Hello " + key + " " + _counter++,
                     });
                 }
             }
@@ -80,7 +81,7 @@ namespace In.SomeService
         public void SetCallback(IStreamingCallback<MyCStreamingData> callback)
         {
             _callback = callback;
-            _timer = new Timer(OnTimer, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            _timer = new Timer(OnTimer, null, TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(1));
         }
     }
 }
