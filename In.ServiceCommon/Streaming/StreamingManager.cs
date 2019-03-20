@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using In.ServiceCommon.Network;
+using log4net;
 
 namespace In.ServiceCommon.Streaming
 {
     public class StreamingManager<TKey, TData> : IStreamingCallback<TData>
     {
+        
+        private static readonly ILog _log = LogManager.GetLogger(typeof(NetworkChannel));
+
         private readonly Func<TData, TKey> _keyFunc;
         private readonly IStreamingAdapter<TKey> _streamingAdapter;
 
@@ -117,18 +122,19 @@ namespace In.ServiceCommon.Streaming
             }
             foreach (var callback in callbacks)
             {
-                if (!_callbackContexts.TryGetValue(callback, out var context))
-                {
-                    continue;
-                }
+                Send(data, callback);
+            }
+        }
 
-                lock (context)
-                {
-                    if (context.HasKey(key))
-                    {
-                        callback.Send(data);
-                    }
-                }
+        private static void Send(TData data, IStreamingCallback<TData> callback)
+        {
+            try
+            {
+                callback.Send(data);
+            }
+            catch (NetworkChannelDisconnected e)
+            {
+                _log.Warn("Unable to send data, client channel is disconnected", e);
             }
         }
     }

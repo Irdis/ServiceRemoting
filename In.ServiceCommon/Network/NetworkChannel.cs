@@ -117,8 +117,7 @@ namespace In.ServiceCommon.Network
             catch (IOException e)
             {
                 _log.Warn("Unable to write data", e);
-                OnDisconnect?.Invoke(_client);
-                throw;
+                throw new NetworkChannelDisconnected("Channel disconnected", e);
             }
         }
 
@@ -152,6 +151,12 @@ namespace In.ServiceCommon.Network
             try
             {
                 read = _stream.EndRead(ar);
+                if (read == 0)
+                {
+                    var state = (ChannelState) ar.AsyncState;
+                    OnDisconnect?.Invoke(state.Client);
+                    return false;
+                }
                 return true;
             }
             catch (ObjectDisposedException e)

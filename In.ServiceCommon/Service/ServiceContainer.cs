@@ -10,7 +10,7 @@ using In.ServiceCommon.Streaming;
 
 namespace In.ServiceCommon.Service
 {
-    public class ServiceContainer : INetworkMessageProcessor, IChannelObserver
+    public class ServiceContainer : INetworkMessageProcessor, IChannelObserver, IDisposable
     {
         private readonly Dictionary<Type, object> _services;
         private readonly Dictionary<string, DelegateContract> _streamingContracts;
@@ -35,7 +35,7 @@ namespace In.ServiceCommon.Service
 
         private void Init(int port)
         {
-            Task.Factory.StartNew(() => _networkListener.Listen(port), TaskCreationOptions.LongRunning);
+            _networkListener.Listen(port);
         }
 
         public void OnChannelConnected(INetworkChannel networkChannel)
@@ -112,6 +112,11 @@ namespace In.ServiceCommon.Service
                     channel.Send(memory);
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _networkListener.Shutdown();
         }
     }
 }

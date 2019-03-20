@@ -6,19 +6,11 @@ using log4net;
 
 namespace In.ServiceCommon.Network
 {
-    public enum ClientState
-    {
-        NotConnected,
-        Connecting,
-        Connected,
-        Shutdown
-    }
-
     public class NetworkClient
     {
         private static readonly ILog _log = LogManager.GetLogger(typeof(NetworkClient));
 
-        private volatile TcpClient _tcpClient;
+        private TcpClient _tcpClient;
         private readonly NetworkChannel _channel;
         private readonly INetworkMessageProcessor _messageProcessor;
 
@@ -27,7 +19,7 @@ namespace In.ServiceCommon.Network
         private readonly string _host;
         private readonly int _port;
 
-        private volatile ClientState _state = ClientState.NotConnected;
+        private volatile NetworkClientState _state = NetworkClientState.NotConnected;
         private readonly object _lock = new object();
 
         public NetworkClient(string host, int port, INetworkMessageProcessor processor)
@@ -45,7 +37,7 @@ namespace In.ServiceCommon.Network
         {
             lock (_lock)
             {
-                _state = ClientState.Connecting;
+                _state = NetworkClientState.Connecting;
                 Connect();
             }
         }
@@ -54,7 +46,7 @@ namespace In.ServiceCommon.Network
         {
             if (TryConnectClient())
             {
-                _state = ClientState.Connected;
+                _state = NetworkClientState.Connected;
                 _channel.Listen(_tcpClient);
             }
         }
@@ -72,7 +64,7 @@ namespace In.ServiceCommon.Network
             {
                 _log.Warn("Unable to connect", e);
                 _reconnectTimer.Change(_reconnectTimeout, Timeout.Infinite);
-                _log.InfoFormat("Reconnecting in {0}...", _reconnectTimer);
+                _log.InfoFormat("Reconnecting in {0}...", _reconnectTimeout);
                 return false;
             }
         }
@@ -81,7 +73,7 @@ namespace In.ServiceCommon.Network
         {
             lock (_lock)
             {
-                if (_state == ClientState.Shutdown)
+                if (_state == NetworkClientState.Shutdown)
                 {
                     return;
                 }
@@ -94,7 +86,7 @@ namespace In.ServiceCommon.Network
         {
             lock (_lock)
             {
-                if (_state != ClientState.Connected)
+                if (_state != NetworkClientState.Connected)
                 {
                     return;
                 }
@@ -103,7 +95,7 @@ namespace In.ServiceCommon.Network
                     return;
                 }
 
-                _state = ClientState.Connecting;
+                _state = NetworkClientState.Connecting;
                 CleanupTcpClient();
                 _tcpClient = new TcpClient();
                 Connect();
@@ -119,7 +111,7 @@ namespace In.ServiceCommon.Network
         {
             lock (_lock)
             {
-                if (_state != ClientState.Connected)
+                if (_state != NetworkClientState.Connected)
                 {
                     throw new InvalidNetworkClientStateException();
                 }
@@ -131,7 +123,7 @@ namespace In.ServiceCommon.Network
         {
             lock (_lock)
             {
-                _state = ClientState.Shutdown;
+                _state = NetworkClientState.Shutdown;
                 _reconnectTimer.Dispose();
                 _channel.OnDisconnect -= OnDisconnect;
                 CleanupTcpClient();

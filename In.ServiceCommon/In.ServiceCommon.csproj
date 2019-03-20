@@ -60,6 +60,8 @@
     <Compile Include="Client\IClientServiceProxy.cs" />
     <Compile Include="Client\MessageType.cs" />
     <Compile Include="Network\ChannelState.cs" />
+    <Compile Include="Network\NetworkChannelDisconnected.cs" />
+    <Compile Include="Network\NetworkClientState.cs" />
     <Compile Include="Network\InvalidNetworkClientStateException.cs" />
     <Compile Include="Service\DelegateContract.cs" />
     <Compile Include="Service\IChannelObserver.cs" />
