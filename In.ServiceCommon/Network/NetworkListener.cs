@@ -5,13 +5,19 @@ using System.Net;
 using System.Net.Sockets;
 using In.ServiceCommon.Network;
 using In.ServiceCommon.Service;
+using log4net;
 
 namespace In.ServiceCommon
 {
     public class NetworkListener
     {
+        private static readonly ILog _log = LogManager.GetLogger(typeof(NetworkListener));
+
         private TcpListener _listener;
-        private readonly ConcurrentDictionary<TcpClient, NetworkChannel> _channels = new ConcurrentDictionary<TcpClient, NetworkChannel>();
+
+        private readonly ConcurrentDictionary<TcpClient, NetworkChannel> _channels =
+            new ConcurrentDictionary<TcpClient, NetworkChannel>();
+
         private readonly INetworkMessageProcessor _messageProcessor;
         private readonly IChannelObserver _channelObserver;
 
@@ -30,18 +36,42 @@ namespace In.ServiceCommon
 
         private void BeginAcceptClient()
         {
-            _listener.BeginAcceptTcpClient(OnClientAccepted, null);
+            try
+            {
+                _listener.BeginAcceptTcpClient(OnClientAccepted, null);
+            }
+            catch (ObjectDisposedException e)
+            {
+                _log.Warn("Listener is shutdown", e);
+            }
+        }
+
+        private bool TryEndAccept(IAsyncResult ar, out TcpClient client)
+        {
+            try
+            {
+                client = _listener.EndAcceptTcpClient(ar);
+                return true;
+            }
+            catch (ObjectDisposedException e)
+            {
+                _log.Warn("Listener is shutdown", e);
+                client = null;
+                return false;
+            }
         }
 
         private void OnClientAccepted(IAsyncResult ar)
         {
-            var client = _listener.EndAcceptTcpClient(ar);
-            var channel = new NetworkChannel(_messageProcessor);
-            channel.OnDisconnect += ChannelOnDisconnect;
-            _channels[client] = channel;
-            _channelObserver.OnChannelConnected(channel);
-            channel.Listen(client);
-            BeginAcceptClient();
+            if (TryEndAccept(ar, out var client))
+            {
+                var channel = new NetworkChannel(_messageProcessor);
+                channel.OnDisconnect += ChannelOnDisconnect;
+                _channels[client] = channel;
+                _channelObserver.OnChannelConnected(channel);
+                channel.Listen(client);
+                BeginAcceptClient();
+            }
         }
 
         private void ChannelOnDisconnect(object obj)
